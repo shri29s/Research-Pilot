@@ -129,7 +129,8 @@ class SupervisorAgent:
         final_report = self.writer.run(
             query=query, 
             syntheses=session_state.synthesis_drafts, 
-            critiques=session_state.critiques
+            critiques=session_state.critiques,
+            papers_by_subq=session_state.retrieved_papers
         )
         duration_ms = (time.time() - start_time) * 1000
         tracer.trace_step("WriterAgent", {"query": query}, final_report, duration_ms)

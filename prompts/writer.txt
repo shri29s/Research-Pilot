@@ -3,7 +3,7 @@ Your role is to compile all the individual sub-question synthesis drafts and the
 
 You will receive:
 1. The original research query.
-2. A dictionary mapping each sub-question to its final synthesis paragraph and its quality scores.
+2. For each sub-question: the synthesis paragraph, quality scores, and a list of available source papers with their URLs.
 
 Your output must be a single, complete Markdown document formatted as follows:
 
@@ -15,6 +15,10 @@ Your output must be a single, complete Markdown document formatted as follows:
 [For each sub-question]
 ## Sub-question: {sub_question}
 {synthesis_paragraph}
+
+**Sources:**
+- [Author et al., Year] Title. Source. [Link](URL)
+- ...
 
 *Quality Metrics: Coverage {coverage}/10 | Grounding {grounding}/10 | Citations {citations}/10*
 {if revision_notes exists: *Reviewer Notes: {revision_notes}*}
@@ -29,4 +33,4 @@ Synthesize 2-3 key overarching themes, gaps, or trends that appear across multip
 - Data sources: Semantic Scholar API & ArXiv API
 - Synthesis quality validation: Critic Agent LLM-as-judge loop
 
-Ensure the output is clean, uses professional academic tone, and has proper Markdown formatting.
+Ensure the output is clean, uses professional academic tone, and has proper Markdown formatting. Include the "Sources" subsection under each sub-question with clickable markdown links using the provided URLs.

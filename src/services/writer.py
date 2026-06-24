@@ -1,7 +1,7 @@
 import logging
 import datetime
-from typing import Dict
-from src.models.schemas import CritiqueReport
+from typing import Dict, List
+from src.models.schemas import CritiqueReport, Paper
 from src.utils.llm import load_prompt, call_aimlabs
 
 logger = logging.getLogger("ResearchPilot.WriterAgent")
@@ -12,7 +12,7 @@ class WriterAgent:
     def __init__(self):
         self.system_instruction_template = load_prompt("writer")
         
-    def run(self, query: str, syntheses: Dict[str, str], critiques: Dict[str, CritiqueReport]) -> str:
+    def run(self, query: str, syntheses: Dict[str, str], critiques: Dict[str, CritiqueReport], papers_by_subq: Dict[str, List[Paper]]) -> str:
         """
         Assembles and edits the drafts into a publication-ready literature review report.
         """
@@ -21,21 +21,31 @@ class WriterAgent:
         # 1. Format date
         today_str = datetime.date.today().strftime("%B %d, %Y")
         
-        # 2. Build detailed sections block for LLM context
+        # 2. Build detailed sections block for LLM context (including paper URLs for citations)
         sections_data = ""
         for i, sub_q in enumerate(syntheses.keys(), 1):
             synthesis_text = syntheses[sub_q]
             critique = critiques.get(sub_q)
+            papers = papers_by_subq.get(sub_q, [])
             
             coverage = critique.coverage if critique else 0
             grounding = critique.grounding if critique else 0
             citations = critique.citations if critique else 0
             revision_notes = critique.revision_notes if critique else ""
             
+            # Build sources list with links
+            sources_text = ""
+            if papers:
+                sources_text = "\nAvailable Sources:\n"
+                for p in papers:
+                    url = p.external_url or f"https://arxiv.org/abs/{p.id.replace('arxiv_', '')}"
+                    sources_text += f"- {p.title} — {', '.join(p.authors[:3])}{' et al.' if len(p.authors) > 3 else ''} ({p.year}) — {url}\n"
+            
             sections_data += (
                 f"--- SECTION {i} ---\n"
                 f"Sub-question: {sub_q}\n"
                 f"Synthesis Draft:\n{synthesis_text}\n"
+                f"{sources_text}"
                 f"Quality Scores: Coverage {coverage}/10 | Grounding {grounding}/10 | Citations {citations}/10\n"
                 f"Reviewer Notes: {revision_notes}\n\n"
             )
@@ -52,7 +62,7 @@ class WriterAgent:
             f"Date: {today_str}\n\n"
             f"Section Drafts and Scores:\n"
             f"{sections_data}\n\n"
-            f"Please generate the complete, cohesive, and cited Markdown document."
+            f"Please generate the complete, cohesive, and cited Markdown document with a 'Sources' subsection under each sub-question containing the clickable links."
         )
         
         # 4. Call LLM
