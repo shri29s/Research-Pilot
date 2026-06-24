@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Axiom — Observability at the speed of thought</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300;0,14..32,400;0,14..32,500;1,14..32,300&family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+/* ─── TOKENS ─────────────────────────────────────────────────────────────── */
+:root {
+  --c-bg:           #080A0F;
+  --c-surface:      #0E1117;
+  --c-surface-hi:   #161B24;
+  --c-rule:         rgba(255,255,255,0.07);
+  --c-accent:       #7EE8A2;
+  --c-accent-dim:   rgba(126,232,162,0.10);
+  --c-accent-glow:  rgba(126,232,162,0.20);
+  --c-text:         #EDF0F4;
+  --c-muted:        #5C6478;
+  --c-muted-hi:     #8A93A8;
+
+  --font-display:   'DM Serif Display', Georgia, serif;
+  --font-body:      'Inter', system-ui, sans-serif;
+  --font-mono:      'DM Mono', monospace;
+
+  --ease-expo:      cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-circ:      cubic-bezier(0.85, 0, 0.15, 1);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--c-bg);
+  color: var(--c-text);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.6;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ─── NAV ────────────────────────────────────────────────────────────────── */
+nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 48px;
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.3s, background 0.3s, backdrop-filter 0.3s;
+}
+nav.scrolled {
+  background: rgba(8,10,15,0.85);
+  backdrop-filter: blur(20px);
+  border-color: var(--c-rule);
+}
+
+.nav-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--c-text);
+  text-decoration: none;
+}
+.nav-logo svg { width: 28px; height: 28px; }
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 36px;
+  list-style: none;
+}
+.nav-links a {
+  font-size: 13px;
+  color: var(--c-muted-hi);
+  text-decoration: none;
+  letter-spacing: 0.01em;
+  transition: color 0.2s;
+}
+.nav-links a:hover { color: var(--c-text); }
+
+.nav-cta {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.btn-ghost {
+  font-size: 13px;
+  color: var(--c-muted-hi);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-body);
+  transition: color 0.2s;
+}
+.btn-ghost:hover { color: var(--c-text); }
+
+.btn-primary {
+  font-size: 13px;
+  font-family: var(--font-body);
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: #080A0F;
+  background: var(--c-accent);
+  border: none;
+  border-radius: 6px;
+  padding: 9px 20px;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.2s var(--ease-expo);
+}
+.btn-primary:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+/* ─── HERO ───────────────────────────────────────────────────────────────── */
+.hero {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 140px 48px 80px;
+  text-align: center;
+  overflow: hidden;
+}
+
+/* SVG Atmosphere Layer */
+.hero-atmosphere {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+/* Grid texture */
+.hero-grid {
+  position: absolute;
+  inset: 0;
+  opacity: 1;
+}
+
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px 6px 8px;
+  border: 1px solid var(--c-rule);
+  border-radius: 100px;
+  font-size: 12px;
+  font-family: var(--font-mono);
+  color: var(--c-muted-hi);
+  letter-spacing: 0.04em;
+  margin-bottom: 40px;
+  position: relative;
+  z-index: 2;
+  opacity: 0;
+  transform: translateY(10px);
+  animation: fadeUp 0.8s 0.2s var(--ease-expo) forwards;
+}
+.hero-badge-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--c-accent);
+  box-shadow: 0 0 8px var(--c-accent);
+}
+
+.hero-headline {
+  position: relative;
+  z-index: 2;
+  font-family: var(--font-display);
+  font-size: clamp(52px, 7vw, 104px);
+  font-weight: 400;
+  line-height: 1.0;
+  letter-spacing: -0.02em;
+  max-width: 900px;
+  margin: 0 auto 28px;
+  opacity: 0;
+  transform: translateY(20px);
+  animation: fadeUp 0.9s 0.35s var(--ease-expo) forwards;
+}
+.hero-headline em {
+  font-style: italic;
+  color: var(--c-accent);
+}
+
+.hero-sub {
+  position: relative;
+  z-index: 2;
+  font-size: 17px;
+  color: var(--c-muted-hi);
+  max-width: 520px;
+  margin: 0 auto 48px;
+  line-height: 1.65;
+  opacity: 0;
+  transform: translateY(16px);
+  animation: fadeUp 0.9s 0.5s var(--ease-expo) forwards;
+}
+
+.hero-actions {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  opacity: 0;
+  transform: translateY(12px);
+  animation: fadeUp 0.9s 0.65s var(--ease-expo) forwards;
+}
+
+.btn-primary-lg {
+  font-size: 14px;
+  font-family: var(--font-body);
+  font-weight: 500;
+  color: #080A0F;
+  background: var(--c-accent);
+  border: none;
+  border-radius: 8px;
+  padding: 14px 32px;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.25s var(--ease-expo), box-shadow 0.25s;
+}
+.btn-primary-lg:hover {
+  opacity: 0.92;
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px rgba(126,232,162,0.25);
+}
+
+.btn-secondary-lg {
+  font-size: 14px;
+  font-family: var(--font-body);
+  font-weight: 400;
+  color: var(--c-muted-hi);
+  background: none;
+  border: 1px solid var(--c-rule);
+  border-radius: 8px;
+  padding: 13px 28px;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+.btn-secondary-lg:hover {
+  border-color: rgba(255,255,255,0.2);
+  color: var(--c-text);
+}
+
+/* ─── STATS STRIP ────────────────────────────────────────────────────────── */
+.stats-strip {
+  border-top: 1px solid var(--c-rule);
+  border-bottom: 1px solid var(--c-rule);
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+}
+.stat-item {
+  padding: 36px 48px;
+  border-right: 1px solid var(--c-rule);
+}
+.stat-item:last-child { border-right: none; }
+.stat-num {
+  font-family: var(--font-display);
+  font-size: clamp(32px, 4vw, 56px);
+  font-weight: 400;
+  line-height: 1;
+  color: var(--c-text);
+  letter-spacing: -0.02em;
+  margin-bottom: 6px;
+}
+.stat-num span {
+  color: var(--c-accent);
+}
+.stat-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--c-muted);
+}
+
+/* ─── FEATURES ───────────────────────────────────────────────────────────── */
+.features {
+  padding: 128px 48px;
+}
+
+.section-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--c-accent);
+  margin-bottom: 20px;
+}
+
+.section-title {
+  font-family: var(--font-display);
+  font-size: clamp(36px, 4.5vw, 64px);
+  font-weight: 400;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  max-width: 640px;
+  margin-bottom: 80px;
+}
+.section-title em { font-style: italic; color: var(--c-muted-hi); }
+
+.feature-grid {
+  display: grid;
+  grid-template-columns: 3fr 2fr;
+  grid-template-rows: auto auto;
+  gap: 1px;
+  background: var(--c-rule);
+  border: 1px solid var(--c-rule);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.feature-card {
+  background: var(--c-surface);
+  padding: 48px;
+  transition: background 0.3s;
+  position: relative;
+  overflow: hidden;
+}
+.feature-card:hover { background: var(--c-surface-hi); }
+
+.feature-card.feature-span {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 48px;
+  align-items: center;
+}
+
+.feature-icon {
+  width: 40px;
+  height: 40px;
+  margin-bottom: 28px;
+  color: var(--c-accent);
+}
+
+.feature-title {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 400;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  margin-bottom: 14px;
+}
+
+.feature-desc {
+  font-size: 14px;
+  color: var(--c-muted-hi);
+  line-height: 1.65;
+  max-width: 340px;
+}
+
+/* Gradient border card accent */
+.feature-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--c-accent-glow), transparent);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.feature-card:hover::before { opacity: 1; }
+
+/* Code snippet inside feature */
+.code-block {
+  background: var(--c-bg);
+  border: 1px solid var(--c-rule);
+  border-radius: 10px;
+  padding: 28px 32px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--c-muted-hi);
+  position: relative;
+  overflow: hidden;
+}
+.code-block::before {
+  content: '';
+  position: absolute;
+  top: -40px; right: -40px;
+  width: 120px; height: 120px;
+  background: radial-gradient(circle, var(--c-accent-dim) 0%, transparent 70%);
+}
+.code-key   { color: #7EC8E3; }
+.code-str   { color: var(--c-accent); }
+.code-num   { color: #E5A260; }
+.code-cmt   { color: var(--c-muted); }
+
+/* ─── TESTIMONIALS / SOCIAL PROOF ───────────────────────────────────────── */
+.social-proof {
+  padding: 96px 48px;
+  border-top: 1px solid var(--c-rule);
+}
+
+.proof-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  margin-top: 64px;
+}
+
+.proof-card {
+  background: var(--c-surface);
+  border: 1px solid var(--c-rule);
+  border-radius: 12px;
+  padding: 32px;
+  position: relative;
+  transition: transform 0.3s var(--ease-expo), border-color 0.3s;
+}
+.proof-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(126,232,162,0.2);
+}
+.proof-quote {
+  font-size: 15px;
+  color: var(--c-muted-hi);
+  line-height: 1.65;
+  margin-bottom: 28px;
+}
+.proof-author {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.proof-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--c-surface-hi);
+  display: flex;
+  align-items: center;
+  justify-content: font-size;
+  overflow: hidden;
+}
+.proof-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--c-text);
+}
+.proof-role {
+  font-size: 12px;
+  color: var(--c-muted);
+  font-family: var(--font-mono);
+}
+
+/* ─── CTA SECTION ────────────────────────────────────────────────────────── */
+.cta-section {
+  margin: 0 48px 128px;
+  border: 1px solid var(--c-rule);
+  border-radius: 20px;
+  padding: 96px 80px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  background: var(--c-surface);
+}
+.cta-section::before {
+  content: '';
+  position: absolute;
+  top: -1px; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 10%, var(--c-accent-glow) 50%, transparent 90%);
+}
+
+.cta-title {
+  font-family: var(--font-display);
+  font-size: clamp(40px, 5vw, 72px);
+  font-weight: 400;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  margin-bottom: 20px;
+  position: relative;
+  z-index: 2;
+}
+.cta-title em { font-style: italic; color: var(--c-accent); }
+
+.cta-sub {
+  font-size: 16px;
+  color: var(--c-muted-hi);
+  max-width: 400px;
+  margin: 0 auto 44px;
+  position: relative;
+  z-index: 2;
+}
+
+/* ─── FOOTER ─────────────────────────────────────────────────────────────── */
+footer {
+  border-top: 1px solid var(--c-rule);
+  padding: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.footer-copy {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--c-muted);
+  letter-spacing: 0.04em;
+}
+.footer-links {
+  display: flex;
+  gap: 28px;
+  list-style: none;
+}
+.footer-links a {
+  font-size: 12px;
+  color: var(--c-muted);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.footer-links a:hover { color: var(--c-text); }
+
+/* ─── ANIMATIONS ─────────────────────────────────────────────────────────── */
+@keyframes fadeUp {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes blobRotate {
+  0%   { transform: rotate(0deg) scale(1); }
+  33%  { transform: rotate(120deg) scale(1.08); }
+  66%  { transform: rotate(240deg) scale(0.95); }
+  100% { transform: rotate(360deg) scale(1); }
+}
+
+@keyframes blobPulse {
+  0%, 100% { opacity: 0.35; }
+  50%       { opacity: 0.55; }
+}
+
+@keyframes scanline {
+  0%   { transform: translateY(-100%); }
+  100% { transform: translateY(100vh); }
+}
+
+.reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0.7s var(--ease-expo), transform 0.7s var(--ease-expo);
+}
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@media (max-width: 768px) {
+  nav { padding: 16px 24px; }
+  .nav-links { display: none; }
+  .hero { padding: 100px 24px 60px; }
+  .stats-strip { grid-template-columns: repeat(2, 1fr); }
+  .stat-item { padding: 24px; }
+  .features { padding: 80px 24px; }
+  .feature-grid { grid-template-columns: 1fr; }
+  .feature-card.feature-span { grid-template-columns: 1fr; }
+  .proof-grid { grid-template-columns: 1fr; }
+  .cta-section { margin: 0 24px 80px; padding: 60px 32px; }
+  footer { flex-direction: column; gap: 24px; text-align: center; }
+}
+</style>
+</head>
+
+<body>
+<!-- ─── NAV ─── -->
+<nav id="nav">
+  <a href="#" class="nav-logo">
+    <!-- Logo SVG mark: morphing hexagon -->
+    <svg viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M14 2L24.3923 8V20L14 26L3.60769 20V8L14 2Z"
+            stroke="#7EE8A2" stroke-width="1.5" fill="rgba(126,232,162,0.08)"/>
+      <circle cx="14" cy="14" r="3" fill="#7EE8A2"/>
+    </svg>
+    Axiom
+  </a>
+
+  <ul class="nav-links">
+    <li><a href="#">Product</a></li>
+    <li><a href="#">Docs</a></li>
+    <li><a href="#">Pricing</a></li>
+    <li><a href="#">Blog</a></li>
+    <li><a href="#">Changelog</a></li>
+  </ul>
+
+  <div class="nav-cta">
+    <button class="btn-ghost">Sign in</button>
+    <button class="btn-primary">Get started</button>
+  </div>
+</nav>
+
+<!-- ─── HERO ─── -->
+<section class="hero">
+  <!-- SVG Atmosphere -->
+  <div class="hero-atmosphere">
+    <!-- Dot grid background -->
+    <svg class="hero-grid" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <pattern id="dots" x="0" y="0" width="32" height="32" patternUnits="userSpaceOnUse">
+          <circle cx="1" cy="1" r="1" fill="rgba(255,255,255,0.07)"/>
+        </pattern>
+        <!-- Noise filter for organic blob -->
+        <filter id="gooey" x="-40%" y="-40%" width="180%" height="180%">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="30" result="blur"/>
+          <feColorMatrix in="blur" mode="matrix"
+            values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 22 -8" result="gooey"/>
+        </filter>
+        <filter id="noiseTexture">
+          <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="4" stitchTiles="stitch"/>
+          <feColorMatrix type="saturate" values="0"/>
+          <feBlend in="SourceGraphic" mode="overlay" result="blend"/>
+          <feComposite in="blend" in2="SourceGraphic" operator="in"/>
+        </filter>
+        <radialGradient id="blobGrad1" cx="50%" cy="50%" r="50%">
+          <stop offset="0%"   stop-color="#7EE8A2" stop-opacity="0.4"/>
+          <stop offset="100%" stop-color="#7EE8A2" stop-opacity="0"/>
+        </radialGradient>
+        <radialGradient id="blobGrad2" cx="50%" cy="50%" r="50%">
+          <stop offset="0%"   stop-color="#3B82F6" stop-opacity="0.25"/>
+          <stop offset="100%" stop-color="#3B82F6" stop-opacity="0"/>
+        </radialGradient>
+        <radialGradient id="centerGlow" cx="50%" cy="50%" r="50%">
+          <stop offset="0%"   stop-color="#7EE8A2" stop-opacity="0.06"/>
+          <stop offset="100%" stop-color="#7EE8A2" stop-opacity="0"/>
+        </radialGradient>
+      </defs>
+      <rect width="100%" height="100%" fill="url(#dots)"/>
+
+      <!-- Center ambient glow -->
+      <ellipse cx="50%" cy="45%" rx="600" ry="400" fill="url(#centerGlow)"/>
+
+      <!-- Animated blobs (atmospheric, very subtle) -->
+      <g style="animation: blobPulse 8s ease-in-out infinite">
+        <ellipse cx="30%" cy="35%" rx="300" ry="240"
+                 fill="url(#blobGrad1)" opacity="0.35"
+                 style="animation: blobRotate 22s linear infinite; transform-origin: 30% 35%"/>
+      </g>
+      <g style="animation: blobPulse 10s 3s ease-in-out infinite">
+        <ellipse cx="72%" cy="60%" rx="280" ry="200"
+                 fill="url(#blobGrad2)" opacity="0.3"
+                 style="animation: blobRotate 28s reverse linear infinite; transform-origin: 72% 60%"/>
+      </g>
+
+      <!-- Horizontal scan line (very subtle) -->
+      <rect width="100%" height="1px" fill="rgba(126,232,162,0.04)"
+            style="animation: scanline 8s 2s linear infinite"/>
+    </svg>
+  </div>
+
+  <!-- Hero Content -->
+  <div class="hero-badge">
+    <span class="hero-badge-dot"></span>
+    Now in general availability — v3.0
+  </div>
+
+  <h1 class="hero-headline">
+    Observability at the<br><em>speed of thought</em>
+  </h1>
+
+  <p class="hero-sub">
+    Query petabytes of log data in milliseconds.
+    Axiom replaces your entire observability stack
+    with one tool that actually scales.
+  </p>
+
+  <div class="hero-actions">
+    <button class="btn-primary-lg">Start for free</button>
+    <button class="btn-secondary-lg">View documentation →</button>
+  </div>
+</section>
+
+<!-- ─── STATS ─── -->
+<div class="stats-strip reveal">
+  <div class="stat-item">
+    <div class="stat-num">98<span>%</span></div>
+    <div class="stat-label">Cost reduction vs competitors</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-num">0.3<span>ms</span></div>
+    <div class="stat-label">Median query latency</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-num">∞</div>
+    <div class="stat-label">Data retention, always</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-num">10<span>k+</span></div>
+    <div class="stat-label">Engineering teams</div>
+  </div>
+</div>
+
+<!-- ─── FEATURES ─── -->
+<section class="features">
+  <p class="section-eyebrow reveal">Capabilities</p>
+  <h2 class="section-title reveal">
+    Everything you need.<br><em>Nothing you don't.</em>
+  </h2>
+
+  <div class="feature-grid reveal">
+    <!-- Large feature card -->
+    <div class="feature-card">
+      <svg class="feature-icon" viewBox="0 0 40 40" fill="none">
+        <path d="M8 28L16 20L22 26L32 14" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="32" cy="14" r="3" fill="currentColor" opacity="0.4"/>
+        <rect x="4" y="4" width="32" height="32" rx="4"
+              stroke="currentColor" stroke-width="1.5" opacity="0.2"/>
+      </svg>
+      <h3 class="feature-title">Real-time ingestion<br>at any scale</h3>
+      <p class="feature-desc">
+        Ingest structured and unstructured logs from any source.
+        APM, infrastructure, security events — all in one place,
+        no schema required.
+      </p>
+    </div>
+
+    <!-- Smaller card -->
+    <div class="feature-card">
+      <svg class="feature-icon" viewBox="0 0 40 40" fill="none">
+        <circle cx="20" cy="20" r="12" stroke="currentColor" stroke-width="1.5" opacity="0.3"/>
+        <circle cx="20" cy="20" r="6" stroke="currentColor" stroke-width="1.5" opacity="0.6"/>
+        <circle cx="20" cy="20" r="2" fill="currentColor"/>
+        <line x1="20" y1="8" x2="20" y2="4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+      <h3 class="feature-title">APL query<br>language</h3>
+      <p class="feature-desc">
+        Write expressive queries that return in under a second —
+        across months of data.
+      </p>
+    </div>
+
+    <!-- Full-width code feature -->
+    <div class="feature-card feature-span">
+      <div>
+        <svg class="feature-icon" viewBox="0 0 40 40" fill="none">
+          <polyline points="12,14 6,20 12,26" stroke="currentColor"
+                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity="0.5"/>
+          <polyline points="28,14 34,20 28,26" stroke="currentColor"
+                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity="0.5"/>
+          <line x1="22" y1="10" x2="18" y2="30" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <h3 class="feature-title">Query from anywhere.<br>Deploy in minutes.</h3>
+        <p class="feature-desc">
+          Native SDKs for Node, Python, Go, and Rust. OpenTelemetry-
+          compatible from day one. Bring your existing instrumentation
+          and start querying in under five minutes.
+        </p>
+      </div>
+      <div class="code-block">
+        <div><span class="code-key">import</span> { Axiom } <span class="code-key">from</span> <span class="code-str">'@axiomhq/js'</span></div>
+        <br>
+        <div><span class="code-key">const</span> axiom = <span class="code-key">new</span> Axiom({</div>
+        <div>&nbsp;&nbsp;token: process.env.<span class="code-str">AXIOM_TOKEN</span>,</div>
+        <div>})</div>
+        <br>
+        <div><span class="code-cmt">// Query the last 24h of events</span></div>
+        <div><span class="code-key">const</span> result = <span class="code-key">await</span> axiom.query(<span class="code-str">`</span></div>
+        <div>&nbsp;&nbsp;<span class="code-str">['production-logs']</span></div>
+        <div>&nbsp;&nbsp;<span class="code-str">| where status >= </span><span class="code-num">500</span></div>
+        <div>&nbsp;&nbsp;<span class="code-str">| summarize count() by bin(_time, 1h)</span></div>
+        <div><span class="code-str">`</span>, { startTime: <span class="code-str">'24h'</span> })</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── SOCIAL PROOF ─── -->
+<section class="social-proof">
+  <p class="section-eyebrow reveal">From the team</p>
+  <h2 class="section-title reveal">
+    Trusted by engineers<br>who've tried everything else.
+  </h2>
+
+  <div class="proof-grid">
+    <div class="proof-card reveal">
+      <p class="proof-quote">
+        "We cut our observability bill by 91% on day one. The query speed is
+        genuinely shocking — I keep expecting it to time out and it just… doesn't."
+      </p>
+      <div class="proof-author">
+        <div class="proof-avatar">
+          <svg viewBox="0 0 36 36" width="36" height="36" fill="none">
+            <rect width="36" height="36" rx="18" fill="#1E2029"/>
+            <circle cx="18" cy="14" r="5" fill="#5C6478"/>
+            <path d="M6 30c0-6.627 5.373-12 12-12s12 5.373 12 12" fill="#5C6478"/>
+          </svg>
+        </div>
+        <div>
+          <div class="proof-name">Lena Hartmann</div>
+          <div class="proof-role">Staff Eng @ Resemble AI</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="proof-card reveal" style="transition-delay: 0.1s">
+      <p class="proof-quote">
+        "The APL query language clicked in about ten minutes.
+        Now our on-call rotation actually enjoys debugging — a sentence
+        I never thought I'd write."
+      </p>
+      <div class="proof-author">
+        <div class="proof-avatar">
+          <svg viewBox="0 0 36 36" width="36" height="36" fill="none">
+            <rect width="36" height="36" rx="18" fill="#1E2029"/>
+            <circle cx="18" cy="14" r="5" fill="#5C6478"/>
+            <path d="M6 30c0-6.627 5.373-12 12-12s12 5.373 12 12" fill="#5C6478"/>
+          </svg>
+        </div>
+        <div>
+          <div class="proof-name">Marcus Osei</div>
+          <div class="proof-role">Platform Lead @ Fern</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="proof-card reveal" style="transition-delay: 0.2s">
+      <p class="proof-quote">
+        "Migrated from Datadog in a weekend. The OpenTelemetry support
+        was seamless and we didn't lose a single event. Retention is
+        unlimited — that alone pays for itself."
+      </p>
+      <div class="proof-author">
+        <div class="proof-avatar">
+          <svg viewBox="0 0 36 36" width="36" height="36" fill="none">
+            <rect width="36" height="36" rx="18" fill="#1E2029"/>
+            <circle cx="18" cy="14" r="5" fill="#5C6478"/>
+            <path d="M6 30c0-6.627 5.373-12 12-12s12 5.373 12 12" fill="#5C6478"/>
+          </svg>
+        </div>
+        <div>
+          <div class="proof-name">Sophie Nakamura</div>
+          <div class="proof-role">DevOps @ Workos</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── CTA ─── -->
+<div class="cta-section reveal">
+  <!-- Subtle ambient SVG inside CTA -->
+  <svg style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:hidden" viewBox="0 0 1200 400" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <radialGradient id="ctaGlow" cx="50%" cy="0%" r="60%">
+        <stop offset="0%"   stop-color="#7EE8A2" stop-opacity="0.08"/>
+        <stop offset="100%" stop-color="#7EE8A2" stop-opacity="0"/>
+      </radialGradient>
+    </defs>
+    <rect width="1200" height="400" fill="url(#ctaGlow)"/>
+    <!-- Decorative grid lines -->
+    <line x1="0" y1="200" x2="1200" y2="200" stroke="rgba(126,232,162,0.05)" stroke-width="1"/>
+    <line x1="600" y1="0"  x2="600"  y2="400" stroke="rgba(126,232,162,0.05)" stroke-width="1"/>
+    <circle cx="600" cy="200" r="120" fill="none" stroke="rgba(126,232,162,0.04)" stroke-width="1"/>
+    <circle cx="600" cy="200" r="200" fill="none" stroke="rgba(126,232,162,0.03)" stroke-width="1"/>
+  </svg>
+
+  <h2 class="cta-title">Ready to ship<br>with <em>confidence?</em></h2>
+  <p class="cta-sub">Start free. No credit card. Unlimited data ingestion for your first 30 days.</p>
+  <button class="btn-primary-lg">Create free account</button>
+</div>
+
+<!-- ─── FOOTER ─── -->
+<footer>
+  <span class="footer-copy">© 2025 Axiom, Inc. All rights reserved.</span>
+  <ul class="footer-links">
+    <li><a href="#">Privacy</a></li>
+    <li><a href="#">Terms</a></li>
+    <li><a href="#">Security</a></li>
+    <li><a href="#">Status</a></li>
+  </ul>
+</footer>
+
+<script>
+// Nav scroll effect
+const nav = document.getElementById('nav')
+window.addEventListener('scroll', () => {
+  nav.classList.toggle('scrolled', window.scrollY > 20)
+}, { passive: true })
+
+// Intersection-based reveal
+const revealEls = document.querySelectorAll('.reveal')
+const io = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.classList.add('visible')
+      io.unobserve(e.target)
+    }
+  })
+}, { threshold: 0.12 })
+revealEls.forEach(el => io.observe(el))
+
+// Stagger children of proof-grid
+document.querySelectorAll('.proof-card').forEach((card, i) => {
+  card.style.transitionDelay = `${i * 100}ms`
+})
+</script>
+</body>
+</html>
