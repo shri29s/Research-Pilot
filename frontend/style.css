@@ -1,0 +1,579 @@
+/* ==========================================================================
+   ResearchPilot Design System
+   Ink-toned academic lab aesthetic
+   ========================================================================== */
+
+:root {
+  --ink:            #0D0D0F;   /* page background */
+  --surface:        #141418;   /* card / panel backgrounds */
+  --surface-raised: #1C1C22;   /* textarea, code blocks, hovered items */
+  --border:         #2A2A35;   /* dividers, borders */
+  --text-primary:   #E8E6E0;   /* body text */
+  --text-secondary: #7A7870;   /* labels, captions, placeholders */
+  --amber:          #C9933A;   /* accent — active dot, button, citation links */
+  --amber-dim:      #6B4D1A;   /* inactive dots, hover states */
+  --error:          #C0392B;   /* error states */
+
+  --font-display: 'DM Serif Display', serif;
+  --font-body:    'Inter', sans-serif;
+  --font-mono:    'JetBrains Mono', monospace;
+}
+
+/* Helper to ensure hidden attribute works with display: flex/grid */
+[hidden] {
+  display: none !important;
+}
+
+/* 1. Reset */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* 2. Base styles */
+html, body {
+  background-color: var(--ink);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.6;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* 3. Layout: Header */
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid var(--border);
+  height: 70px;
+}
+
+.wordmark {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+}
+
+#new-query-btn {
+  background: transparent;
+  border: 1px solid var(--amber);
+  color: var(--amber);
+  padding: 0.5rem 1rem;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+#new-query-btn:hover {
+  background: var(--amber-dim);
+  color: var(--text-primary);
+}
+
+/* 4. Main content container */
+main {
+  height: calc(100vh - 70px);
+  position: relative;
+}
+
+/* 5. Phase 1: Input view */
+#input-panel {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 2rem;
+  height: 100%;
+}
+
+.hero-label {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+}
+
+#query-input {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-bottom: 2px solid var(--border);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 1.05rem;
+  padding: 1.2rem;
+  resize: none;
+  outline: none;
+  transition: border-color 0.2s ease;
+  margin-bottom: 1.5rem;
+}
+
+#query-input:focus {
+  border-bottom: 2px solid var(--amber);
+}
+
+#query-input::placeholder {
+  color: var(--text-secondary);
+}
+
+.input-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 2rem;
+}
+
+#submit-btn {
+  background: var(--amber);
+  color: var(--ink);
+  border: none;
+  border-radius: 0; /* Deliberate visual contrast: sharp edges */
+  padding: 0.8rem 2rem;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+#submit-btn:hover:not(:disabled) {
+  background: #db9c3c;
+  transform: translateY(-1px);
+}
+
+#submit-btn:disabled {
+  background: var(--border);
+  color: var(--text-secondary);
+  cursor: not-allowed;
+}
+
+#example-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.chip {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.chip:hover {
+  background: var(--surface-raised);
+  color: var(--text-primary);
+  border-color: var(--text-secondary);
+}
+
+/* 6. Phase 2: Results view grid */
+#results-panel {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  height: 100%;
+}
+
+/* Left panel: Agent Trace */
+#agent-trace {
+  border-right: 1px solid var(--border);
+  background: var(--surface);
+  padding: 2.5rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow-y: auto;
+}
+
+.trace-line {
+  position: absolute;
+  left: 2rem;
+  top: 3rem;
+  bottom: 8rem;
+  width: 2px;
+  background: var(--border);
+  z-index: 1;
+}
+
+/* The filled amber line using CSS variable --fill-pct */
+.trace-line::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: var(--fill-pct, 0%);
+  background: var(--amber);
+  transition: height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.agent-node {
+  display: flex;
+  align-items: center;
+  margin-bottom: 2rem;
+  position: relative;
+  z-index: 2;
+  height: 48px;
+}
+
+.dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  margin-right: 1.25rem;
+  flex-shrink: 0;
+  transition: all 0.3s ease;
+}
+
+.dot.idle {
+  background: var(--ink);
+  border: 2px solid var(--border);
+}
+
+.dot.active {
+  background: var(--amber);
+  border: 2px solid var(--amber);
+  box-shadow: 0 0 10px var(--amber);
+  animation: pulse 1.2s infinite ease-in-out;
+}
+
+.dot.done {
+  background: var(--amber);
+  border: 2px solid var(--amber);
+  position: relative;
+}
+
+.dot.done::after {
+  content: "✓";
+  color: var(--ink);
+  font-size: 8px;
+  font-weight: 900;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.dot.error {
+  background: var(--error);
+  border: 2px solid var(--error);
+  box-shadow: 0 0 10px var(--error);
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.3);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.agent-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.agent-name {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.agent-time {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.trace-total {
+  margin-top: auto;
+  padding-top: 2rem;
+  border-top: 1px solid var(--border);
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.trace-total span {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+/* Right panel: Output panel */
+#output-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow-y: auto;
+  background: var(--ink);
+  padding: 3rem 4rem;
+}
+
+#output-content {
+  flex: 1;
+  max-width: 72ch;
+  width: 100%;
+  margin: 0 auto;
+}
+
+/* Connecting banner */
+.connecting-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+  letter-spacing: 0.05em;
+  font-family: var(--font-mono);
+}
+
+.connecting-banner::after {
+  content: "";
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--text-secondary);
+  border-top: 2px solid transparent;
+  border-radius: 50%;
+  margin-left: 0.75rem;
+  animation: spin 1s infinite linear;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Error message banner inside output */
+.error-banner {
+  background: rgba(192, 57, 43, 0.1);
+  border-left: 4px solid var(--error);
+  padding: 1.2rem;
+  margin: 1.5rem 0;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+}
+
+/* 7. Markdown styles */
+#output-content h1 {
+  font-size: 1.8rem;
+  font-weight: 600;
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  color: var(--text-primary);
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 0.75rem;
+}
+
+#output-content h2 {
+  font-size: 1.3rem;
+  font-weight: 600;
+  margin-top: 2.25rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.3rem;
+  color: var(--text-primary);
+}
+
+#output-content h3 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+#output-content p {
+  margin-bottom: 1.25rem;
+  line-height: 1.75;
+  color: #cccbca;
+}
+
+#output-content ul, #output-content ol {
+  padding-left: 1.5rem;
+  margin-bottom: 1.25rem;
+}
+
+#output-content li {
+  margin-bottom: 0.5rem;
+  color: #cccbca;
+}
+
+#output-content a {
+  color: var(--amber);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+}
+
+#output-content a:hover {
+  text-decoration-thickness: 2px;
+}
+
+#output-content code {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  background: var(--surface-raised);
+  padding: 0.2rem 0.4rem;
+  border-radius: 3px;
+  color: #e5c07b;
+}
+
+#output-content pre {
+  background: var(--surface-raised);
+  padding: 1.2rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin-bottom: 1.25rem;
+  border: 1px solid var(--border);
+}
+
+#output-content pre code {
+  background: none;
+  padding: 0;
+  color: inherit;
+}
+
+#output-content blockquote {
+  border-left: 3px solid var(--amber);
+  padding-left: 1.2rem;
+  color: var(--text-secondary);
+  margin-bottom: 1.25rem;
+  font-style: italic;
+  background: rgba(20, 20, 24, 0.5);
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+#output-content strong {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+#output-content hr {
+  border: 0;
+  border-top: 1px solid var(--border);
+  margin: 2rem 0;
+}
+
+/* Footer & Download Button */
+#output-footer {
+  margin-top: 3rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+  max-width: 72ch;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+#download-btn {
+  background: transparent;
+  border: 1px solid var(--amber);
+  color: var(--amber);
+  padding: 0.7rem 1.8rem;
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+#download-btn:hover {
+  background: var(--amber-dim);
+  color: var(--text-primary);
+}
+
+/* 8. Responsive Design (Mobile Breakpoints) */
+@media (max-width: 768px) {
+  #results-panel {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+    overflow-y: auto;
+  }
+
+  #agent-trace {
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    padding: 1rem 1.5rem;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    height: auto;
+    overflow-x: auto;
+    overflow-y: hidden;
+    gap: 1.5rem;
+  }
+
+  .trace-line {
+    display: none;
+  }
+
+  .agent-node {
+    margin-bottom: 0;
+    flex-direction: column;
+    align-items: center;
+    height: auto;
+  }
+
+  .dot {
+    margin-right: 0;
+    margin-bottom: 0.5rem;
+  }
+
+  .agent-info {
+    text-align: center;
+  }
+
+  .agent-name {
+    font-size: 0.7rem;
+  }
+
+  .agent-time {
+    font-size: 0.65rem;
+  }
+
+  .trace-total {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: none;
+    font-size: 0.75rem;
+    flex-shrink: 0;
+  }
+
+  #output-panel {
+    padding: 2rem 1.5rem;
+    height: auto;
+  }
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .dot.active {
+    animation: none;
+  }
+  .trace-line::after {
+    transition: none;
+  }
+}
