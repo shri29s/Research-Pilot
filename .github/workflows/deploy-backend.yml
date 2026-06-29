@@ -9,6 +9,7 @@ on:
       - 'src/**'
       - 'prompts/**'
       - 'config.py'
+      - '.github/workflows/deploy-backend.yml'
 
 permissions:
   contents: read

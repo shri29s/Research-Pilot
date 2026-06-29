@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - 'frontend/**'
+      - '.github/workflows/deploy-frontend.yml'
 
 jobs:
   deploy-frontend:
@@ -17,6 +18,10 @@ jobs:
 
       - name: Install Vercel CLI
         run: npm install --global vercel@latest
+
+      - name: Inject Production Config
+        run: |
+          echo "const CONFIG = { production: true, prod_url: '${{ secrets.BACKEND_URL }}' };" > frontend/config.js
 
       - name: Pull Vercel Environment Information
         run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}

@@ -2,9 +2,7 @@
 // ResearchPilot Front-End Controller
 // ==========================================================================
 
-const BACKEND_URL = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
-  ? "http://localhost:8000/run-research"
-  : "https://researchpilot-backend-80d4623c-7e9a-43a9-92c0-ccaafab64c5c.a.run.app/run-research"; // Placeholder URL to be replaced on actual Cloud Run deployment
+const BACKEND_URL = CONFIG.production ? CONFIG.prod_url : "http://localhost:8000/run-research";
 
 const AGENTS = ["supervisor", "decomposer", "retriever", "synthesiser", "critic", "writer"];
 
