@@ -3,112 +3,220 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ResearchPilot — Multi-Agent Literature Review Generator</title>
+  <title>ResearchPilot — Autonomous Academic Synthesis Engine</title>
 
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@400;500;600&family=JetBrains+Mono&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 
   <!-- marked.js — Markdown renderer -->
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <!-- DOMPurify — sanitise marked output before innerHTML -->
   <script src="https://cdn.jsdelivr.net/npm/dompurify/dist/purify.min.js"></script>
 
-  <link rel="stylesheet" href="style.css?v=2">
+  <link rel="stylesheet" href="style.css?v=4">
 </head>
 <body>
 
+  <!-- Premium SVGs for structural texture, ambient lighting and paper grain noise -->
+  <svg class="svg-defs" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <!-- Grid Mesh Pattern -->
+      <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+        <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(255, 255, 255, 0.03)" stroke-width="1"/>
+      </pattern>
+      
+      <!-- Grainy Noise Filter -->
+      <filter id="noise">
+        <feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch"/>
+        <feColorMatrix type="saturate" values="0"/>
+        <feBlend in="SourceGraphic" mode="overlay"/>
+      </filter>
+    </defs>
+  </svg>
+
+  <!-- Textured overlays -->
+  <div class="noise-overlay"></div>
+  <div class="grid-overlay"></div>
+  
+  <!-- Subtle ambient glows -->
+  <div class="ambient-glow glow-1"></div>
+  <div class="ambient-glow glow-2"></div>
+
   <header>
-    <span class="wordmark">ResearchPilot</span>
-    <button id="new-query-btn" hidden>New query</button>
+    <div class="header-logo">
+      <span class="wordmark">ResearchPilot</span>
+      <span class="wordmark-tag">ACADEMIC SYNTHESIS ENGINE</span>
+    </div>
+    <button id="new-query-btn" hidden>
+      <span>New Query</span>
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+    </button>
   </header>
 
   <main>
 
-    <!-- PHASE 1: input -->
+    <!-- PHASE 1: Bento Landing Dashboard -->
     <section id="input-panel">
-      <p class="hero-label">Ask a research question.</p>
-      <textarea id="query-input"
-        placeholder="e.g. What are the key approaches to multi-hop reasoning in RAG systems?"
-        rows="4"></textarea>
-      <div class="input-actions">
-        <button id="submit-btn" disabled>Synthesise →</button>
+      <div class="hero-container">
+        <span class="meta-label">RESEARCHPILOT v1.0</span>
+        <h1 class="hero-title">Synthesise the world's academic literature.</h1>
+        <p class="hero-sub">Enter an open-ended research question. ResearchPilot orchestrates a coordinated team of autonomous agents to search academic databases, cross-reference findings, verify facts, and build a cited manuscript in real-time.</p>
       </div>
-      <div id="example-chips">
-        <button class="chip" data-query="What are the state-of-the-art approaches to retrieval-augmented generation?">RAG approaches</button>
-        <button class="chip" data-query="How do vision transformers compare to CNNs for medical image classification?">Vision transformers vs CNNs</button>
-        <button class="chip" data-query="What techniques improve multi-hop reasoning in large language models?">Multi-hop reasoning in LLMs</button>
+
+      <div class="bento-grid">
+        <!-- Main Bento Grid Item: Query Card -->
+        <div class="bento-item main-query">
+          <div class="input-header">
+            <label for="query-input" class="input-label">RESEARCH INQUIRY</label>
+            <span class="input-kbd">CTRL + ENTER</span>
+          </div>
+          <textarea id="query-input"
+            placeholder="e.g., What are the key approaches to handling multi-hop reasoning in RAG systems?"
+            rows="4"></textarea>
+          <div class="input-actions">
+            <button id="submit-btn" disabled>
+              <span>Begin Synthesis</span>
+              <svg class="arrow-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+                <polyline points="12 5 19 12 12 19"></polyline>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Bento Grid Item: Example Chips -->
+        <div class="bento-item topics-widget">
+          <span class="section-tag">POPULAR SYSTEM TOPICS</span>
+          <div id="example-chips">
+            <button class="chip" data-query="What are the state-of-the-art approaches to retrieval-augmented generation?">RAG Approaches</button>
+            <button class="chip" data-query="How do vision transformers compare to CNNs for medical image classification?">ViT vs CNNs in Medicine</button>
+            <button class="chip" data-query="What techniques improve multi-hop reasoning in large language models?">Multi-hop LLM Reasoning</button>
+          </div>
+        </div>
       </div>
     </section>
 
-    <!-- PHASE 2: results (hidden until submit) -->
+    <!-- PHASE 2: Results & Telemetry Trace (hidden until submit) -->
     <section id="results-panel" hidden>
 
+      <!-- Sidebar: Orchestration Telemetry -->
       <aside id="agent-trace">
-        <div class="trace-line"></div>
-        
-        <div class="agent-node" id="node-supervisor">
-          <div class="dot idle" id="dot-supervisor"></div>
-          <div class="agent-info">
-            <span class="agent-name">Supervisor</span>
-            <span class="agent-time" id="time-supervisor">—</span>
+        <div class="trace-header">
+          <span class="section-tag">AGENTS ORCHESTRATION PIPELINE</span>
+        </div>
+
+        <div class="trace-container">
+          <div class="agent-node" id="node-supervisor">
+            <span class="step-num">01</span>
+            <div class="dot idle" id="dot-supervisor"></div>
+            <div class="agent-info">
+              <div class="agent-meta">
+                <span class="agent-name">Supervisor</span>
+                <span class="agent-role">Orchestration & Routing</span>
+              </div>
+              <span class="agent-time" id="time-supervisor">—</span>
+            </div>
+          </div>
+          
+          <div class="agent-node" id="node-decomposer">
+            <span class="step-num">02</span>
+            <div class="dot idle" id="dot-decomposer"></div>
+            <div class="agent-info">
+              <div class="agent-meta">
+                <span class="agent-name">Decomposer</span>
+                <span class="agent-role">Query Segmentation</span>
+              </div>
+              <span class="agent-time" id="time-decomposer">—</span>
+            </div>
+          </div>
+          
+          <div class="agent-node" id="node-retriever">
+            <span class="step-num">03</span>
+            <div class="dot idle" id="dot-retriever"></div>
+            <div class="agent-info">
+              <div class="agent-meta">
+                <span class="agent-name">Retriever</span>
+                <span class="agent-role">Source Vector Search</span>
+              </div>
+              <span class="agent-time" id="time-retriever">—</span>
+            </div>
+          </div>
+          
+          <div class="agent-node" id="node-synthesiser">
+            <span class="step-num">04</span>
+            <div class="dot idle" id="dot-synthesiser"></div>
+            <div class="agent-info">
+              <div class="agent-meta">
+                <span class="agent-name">Synthesiser</span>
+                <span class="agent-role">Cross-Paper Mapping</span>
+              </div>
+              <span class="agent-time" id="time-synthesiser">—</span>
+            </div>
+          </div>
+          
+          <div class="agent-node" id="node-critic">
+            <span class="step-num">05</span>
+            <div class="dot idle" id="dot-critic"></div>
+            <div class="agent-info">
+              <div class="agent-meta">
+                <span class="agent-name">Critic</span>
+                <span class="agent-role">Veracity & Logic Audit</span>
+              </div>
+              <span class="agent-time" id="time-critic">—</span>
+            </div>
+          </div>
+          
+          <div class="agent-node" id="node-writer">
+            <span class="step-num">06</span>
+            <div class="dot idle" id="dot-writer"></div>
+            <div class="agent-info">
+              <div class="agent-meta">
+                <span class="agent-name">Writer</span>
+                <span class="agent-role">Manuscript Compilation</span>
+              </div>
+              <span class="agent-time" id="time-writer">—</span>
+            </div>
           </div>
         </div>
         
-        <div class="agent-node" id="node-decomposer">
-          <div class="dot idle" id="dot-decomposer"></div>
-          <div class="agent-info">
-            <span class="agent-name">Decomposer</span>
-            <span class="agent-time" id="time-decomposer">—</span>
+        <!-- Live status monitor block -->
+        <div class="status-monitor">
+          <span class="monitor-tag">SYSTEM METRICS</span>
+          <div class="metric-grid">
+            <div class="metric-card">
+              <span class="metric-label">ELAPSED TIME</span>
+              <span class="metric-value" id="total-time">0.0s</span>
+            </div>
+            <div class="metric-card">
+              <span class="metric-label">ACTIVE STATE</span>
+              <span class="metric-value active-pulse" id="active-state" aria-live="polite">STANDBY</span>
+            </div>
           </div>
         </div>
-        
-        <div class="agent-node" id="node-retriever">
-          <div class="dot idle" id="dot-retriever"></div>
-          <div class="agent-info">
-            <span class="agent-name">Retriever</span>
-            <span class="agent-time" id="time-retriever">—</span>
-          </div>
-        </div>
-        
-        <div class="agent-node" id="node-synthesiser">
-          <div class="dot idle" id="dot-synthesiser"></div>
-          <div class="agent-info">
-            <span class="agent-name">Synthesiser</span>
-            <span class="agent-time" id="time-synthesiser">—</span>
-          </div>
-        </div>
-        
-        <div class="agent-node" id="node-critic">
-          <div class="dot idle" id="dot-critic"></div>
-          <div class="agent-info">
-            <span class="agent-name">Critic</span>
-            <span class="agent-time" id="time-critic">—</span>
-          </div>
-        </div>
-        
-        <div class="agent-node" id="node-writer">
-          <div class="dot idle" id="dot-writer"></div>
-          <div class="agent-info">
-            <span class="agent-name">Writer</span>
-            <span class="agent-time" id="time-writer">—</span>
-          </div>
-        </div>
-        
-        <div class="trace-total">Total: <span id="total-time">0.0s</span></div>
       </aside>
 
+      <!-- Main Panel: Manuscript Reader -->
       <article id="output-panel">
-        <div id="output-content"></div>
-        <footer id="output-footer" hidden>
-          <button id="download-btn">↓ Download .md</button>
-        </footer>
+        <div class="manuscript-container">
+          <div id="output-content"></div>
+          <footer id="output-footer" hidden>
+            <button id="download-btn">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              <span>Download Manuscript (.md)</span>
+            </button>
+          </footer>
+        </div>
       </article>
 
     </section>
   </main>
 
-  <script src="app.js?v=2"></script>
+  <script src="app.js?v=4"></script>
 </body>
 </html>

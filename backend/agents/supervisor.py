@@ -42,7 +42,7 @@ class SupervisorAgent:
         await asyncio.sleep(0.05)
         
         # Yield initial live trace header
-        yield {"type": "token", "content": f"# ResearchPilot Live Agent Logs\n**Query:** *\"{query}\"*\n\n---\n\n"}
+        yield {"type": "token", "content": f"# ResearchPilot Live Agent Logs\n**Query:** *\"{query}\"*\n\n"}
         await asyncio.sleep(0.01)
         
         # Start Decomposer agent

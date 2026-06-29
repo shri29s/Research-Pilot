@@ -43,6 +43,7 @@ const outputPanel   = document.getElementById("output-panel");
 const outputFooter  = document.getElementById("output-footer");
 const downloadBtn   = document.getElementById("download-btn");
 const totalTimeEl   = document.getElementById("total-time");
+const activeStateEl = document.getElementById("active-state");
 
 // 4. Phase transition functions
 function showInputPhase() {
@@ -64,6 +65,7 @@ function showResultsPhase() {
   markdownBuffer = "";
   sessionStart   = Date.now();
   startTotalTimer();
+  if (activeStateEl) activeStateEl.textContent = "INITIALIZING";
 }
 
 // 5. Agent trace functions
@@ -72,6 +74,20 @@ function setDotState(agentId, state) {
   const dot = document.getElementById(`dot-${agentId}`);
   if (dot) {
     dot.className = `dot ${state}`;
+  }
+  
+  const node = document.getElementById(`node-${agentId}`);
+  if (node) {
+    if (state === "active") {
+      node.classList.add("active-row");
+      node.classList.remove("done-row");
+    } else if (state === "done") {
+      node.classList.remove("active-row");
+      node.classList.add("done-row");
+    } else {
+      node.classList.remove("active-row");
+      node.classList.remove("done-row");
+    }
   }
 }
 
@@ -123,6 +139,7 @@ function resetTrace() {
   agentTimers = {};
   if (totalTimerInterval) clearInterval(totalTimerInterval);
   totalTimeEl.textContent = "0.0s";
+  if (activeStateEl) activeStateEl.textContent = "STANDBY";
   document.getElementById("agent-trace").style.setProperty("--fill-pct", "0%");
 }
 
@@ -132,6 +149,81 @@ function startTotalTimer() {
   }, 100);
 }
 
+function formatManuscriptOutput(html) {
+  // Replace Quality Metrics with premium UI components
+  let formatted = html.replace(/<p><em>Quality Metrics: Coverage (\d+)\/10 \| Grounding (\d+)\/10 \| Citations (\d+)\/10<\/em><\/p>/gi, (match, cov, grd, cit) => {
+    const cVal = parseInt(cov);
+    const gVal = parseInt(grd);
+    const ciVal = parseInt(cit);
+    const isPassing = cVal >= 7 && gVal >= 7 && ciVal >= 7;
+    const statusClass = isPassing ? 'status-pass' : 'status-fail';
+    const statusText = isPassing ? 'PASSED AUDIT' : 'FAILED AUDIT';
+    
+    return `
+      <div class="quality-card ${statusClass}">
+        <div class="quality-header">
+          <span class="quality-title">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right: 4px; vertical-align: middle;">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+              <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+            CRITIC QUALITY METRICS
+          </span>
+          <span class="quality-status">${statusText}</span>
+        </div>
+        <div class="metrics-grid">
+          <div class="metric-item">
+            <div class="metric-info">
+              <span class="metric-name">Coverage</span>
+              <span class="metric-score">${cVal}/10</span>
+            </div>
+            <div class="metric-bar-bg">
+              <div class="metric-bar" style="width: ${cVal * 10}%"></div>
+            </div>
+          </div>
+          <div class="metric-item">
+            <div class="metric-info">
+              <span class="metric-name">Grounding</span>
+              <span class="metric-score">${gVal}/10</span>
+            </div>
+            <div class="metric-bar-bg">
+              <div class="metric-bar" style="width: ${gVal * 10}%"></div>
+            </div>
+          </div>
+          <div class="metric-item">
+            <div class="metric-info">
+              <span class="metric-name">Citations</span>
+              <span class="metric-score">${ciVal}/10</span>
+            </div>
+            <div class="metric-bar-bg">
+              <div class="metric-bar" style="width: ${ciVal * 10}%"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  });
+
+  // Replace Reviewer Notes with a premium alert box
+  formatted = formatted.replace(/<p><em>Reviewer Notes: (.*?)<\/em><\/p>/gi, (match, notes) => {
+    return `
+      <div class="reviewer-notes-card">
+        <div class="reviewer-notes-header">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right: 4px; vertical-align: middle;">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+            <line x1="12" y1="9" x2="12" y2="13"></line>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
+          CRITIC REVISION FEEDBACK
+        </div>
+        <div class="reviewer-notes-text">${notes}</div>
+      </div>
+    `;
+  });
+
+  return formatted;
+}
+
 // 6. Event handler (dispatches stream events to UI)
 function handleEvent(event) {
   switch (event.type) {
@@ -139,6 +231,7 @@ function handleEvent(event) {
     case "agent_start":
       setDotState(event.agent, "active");
       startAgentTimer(event.agent);
+      if (activeStateEl) activeStateEl.textContent = event.agent.toUpperCase();
       break;
 
     case "agent_done":
@@ -151,6 +244,7 @@ function handleEvent(event) {
       setDotState(event.agent, "error");
       stopAgentTimer(event.agent, 0);
       showError(event.agent, event.message);
+      if (activeStateEl) activeStateEl.textContent = "ERROR";
       break;
 
     case "clear_buffer":
@@ -167,7 +261,8 @@ function handleEvent(event) {
       
       markdownBuffer += event.content;
       try {
-        outputContent.innerHTML = DOMPurify.sanitize(marked.parse(markdownBuffer));
+        const rawHtml = DOMPurify.sanitize(marked.parse(markdownBuffer));
+        outputContent.innerHTML = formatManuscriptOutput(rawHtml);
       } catch (err) {
         outputContent.textContent = markdownBuffer; // Fallback
       }
@@ -180,11 +275,13 @@ function handleEvent(event) {
 
     case "error":
       showError(event.agent || "system", event.message);
+      if (activeStateEl) activeStateEl.textContent = "ERROR";
       break;
 
     case "done":
       if (totalTimerInterval) clearInterval(totalTimerInterval);
       outputFooter.hidden = false;
+      if (activeStateEl) activeStateEl.textContent = "COMPLETED";
       
       // Force scroll to bottom once completed
       setTimeout(() => {

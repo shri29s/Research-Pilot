@@ -25,11 +25,17 @@ class DecomposerAgent:
             )
             
             parsed = json.loads(response_text)
-            # Handle both direct list and {"sub_questions": [...]} formats
+            # Handle both direct list and dict formats
             if isinstance(parsed, list):
                 sub_questions = parsed
-            elif isinstance(parsed, dict) and "sub_questions" in parsed and isinstance(parsed["sub_questions"], list):
-                sub_questions = parsed["sub_questions"]
+            elif isinstance(parsed, dict):
+                # Look for a key containing "question" (case-insensitive)
+                key = next((k for k in parsed.keys() if "question" in k.lower()), None)
+                if key and isinstance(parsed[key], list):
+                    sub_questions = parsed[key]
+                else:
+                    logger.warning(f"Decomposer returned unexpected dictionary keys: {list(parsed.keys())}. Falling back.")
+                    raise ValueError("Unexpected JSON structure")
             else:
                 logger.warning(f"Decomposer returned unexpected format: {response_text}. Falling back.")
                 raise ValueError("Unexpected JSON structure")
