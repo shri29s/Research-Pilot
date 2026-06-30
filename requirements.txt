@@ -1,8 +1,0 @@
-google-generativeai==0.5.4
-chromadb>=0.5.3
-arxiv==2.1.0
-requests==2.31.0
-pydantic>=2.9.0
-python-dotenv==1.0.1
-openai>=2.43.0
-legacy-cgi; python_version >= "3.13"

@@ -14,15 +14,33 @@ client = OpenAI(
 
 def load_prompt(prompt_name: str) -> str:
     """Loads a prompt template from the prompts/ folder."""
-    base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    prompt_path = os.path.join(base_dir, "prompts", f"{prompt_name}.txt")
+    current_dir = os.path.dirname(os.path.abspath(__file__))
     
-    try:
-        with open(prompt_path, "r", encoding="utf-8") as f:
-            return f.read().strip()
-    except Exception as e:
-        logger.error(f"Failed to load prompt from {prompt_path}: {str(e)}")
-        raise e
+    # Compile candidate paths
+    search_paths = []
+    # 1. check parent prompts/ (inside container: /app/prompts)
+    parent_dir = os.path.dirname(current_dir)
+    search_paths.append(os.path.join(parent_dir, "prompts", f"{prompt_name}.txt"))
+    # 2. check grandparent prompts/ (local dev: workspace_root/prompts)
+    grandparent_dir = os.path.dirname(parent_dir)
+    search_paths.append(os.path.join(grandparent_dir, "prompts", f"{prompt_name}.txt"))
+    # 3. check default absolute container directories
+    search_paths.append(os.path.join("/app", "prompts", f"{prompt_name}.txt"))
+    search_paths.append(os.path.join("/", "prompts", f"{prompt_name}.txt"))
+
+    # Try loading from the first path that exists
+    for prompt_path in search_paths:
+        if os.path.exists(prompt_path):
+            try:
+                with open(prompt_path, "r", encoding="utf-8") as f:
+                    return f.read().strip()
+            except Exception as e:
+                logger.error(f"Failed to read prompt from existing path {prompt_path}: {str(e)}")
+                raise e
+                
+    error_msg = f"Failed to locate prompt '{prompt_name}.txt'. Searched paths: {search_paths}"
+    logger.error(error_msg)
+    raise FileNotFoundError(error_msg)
 
 def call_aimlabs(system_instruction: str, prompt: str, json_mode: bool = False) -> str:
     """

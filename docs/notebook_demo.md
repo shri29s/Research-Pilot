@@ -55,8 +55,12 @@ os.environ["ARXIV_LIMIT"] = "5"
 Initialize the `SupervisorAgent` to run the literature review loop and display the output directly as formatted Markdown inside the notebook.
 
 ```python
+import sys
+import os
+sys.path.append(os.path.abspath("../backend"))
+
 from IPython.display import display, Markdown
-from src.services.supervisor import SupervisorAgent
+from agents.supervisor_cli import SupervisorAgent
 
 # 1. Define query
 query = "What are the key approaches to handling multi-hop reasoning in RAG systems?"

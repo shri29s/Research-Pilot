@@ -6,9 +6,6 @@ on:
       - main
     paths:
       - 'backend/**'
-      - 'src/**'
-      - 'prompts/**'
-      - 'config.py'
       - '.github/workflows/deploy-backend.yml'
 
 permissions:

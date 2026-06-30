@@ -107,17 +107,18 @@ ResearchPilot divides the cognitive burden of research synthesis across six spec
 ## 4. Running the Project
 
 ### Option A: Command Line Interface (CLI)
-To run a literature compilation directly in your terminal, use the root CLI runner:
+To run a literature compilation directly in your terminal, navigate to the `backend` directory and use the CLI runner:
 ```bash
-uv run main.py "What are the key approaches to handling multi-hop reasoning in RAG systems?"
+cd backend
+uv run cli.py "What are the key approaches to handling multi-hop reasoning in RAG systems?"
 ```
-* **Output:** The compiled literature review will be saved to `literature_review.md` in the workspace root, and detailed traces will be logged under `logs/`.
+* **Output:** The compiled literature review will be saved to `literature_review.md` in the `backend/` directory, and detailed traces will be logged under `backend/logs/`.
 
 ### Option B: Interactive Web Interface (Recommended)
 To run the interactive Awwwards-style Bento dashboard:
 
 1. **Start the FastAPI Backend:**
-   Navigate to the backend directory, install web-specific dependencies, and run Uvicorn:
+   Navigate to the backend directory, install dependencies, and run Uvicorn:
    ```bash
    cd backend
    uv pip install -r requirements.txt
@@ -141,33 +142,23 @@ To run the interactive Awwwards-style Bento dashboard:
 
 ```
 researchpilot/
-├── backend/                  # FastAPI Backend API Server
-│   ├── agents/               # Web implementation of agents
-│   ├── models/               # Pydantic schemas
+├── backend/                  # FastAPI Backend API & CLI Engine
+│   ├── agents/               # Supervisor, decomposer, retriever, synthesiser, critic, writer agents
+│   │   ├── supervisor.py     # Async/SSE Web supervisor agent
+│   │   └── supervisor_cli.py # Sync CLI supervisor agent
+│   ├── models/               # Shared Pydantic data schemas
 │   ├── utils/                # LLM & Academic search utilities
-│   ├── main.py               # API entry point & SSE generator
-│   └── requirements.txt      # Web backend dependencies
+│   ├── prompts/              # Centralized system instruction templates
+│   ├── cli.py                # CLI runner entrypoint
+│   ├── main.py               # API server entrypoint
+│   ├── requirements.txt      # Backend Python dependencies
+│   ├── pyproject.toml        # Backend Python project file
+│   └── uv.lock               # Backend lock file
 │
 ├── frontend/                 # Vanilla Web UI Dashboard
 │   ├── index.html            # Bento Grid markup
 │   ├── style.css             # Glassmorphic lab theme
 │   └── app.js                # SSE Event dispatcher & formatter
 │
-├── src/                      # Core CLI Service Library
-│   ├── models/               # Shared Pydantic data schemas
-│   ├── services/             # CLI agent logic
-│   └── utils/                # Observability & LLM functions
-│
-├── prompts/                  # Centralized system instruction templates
-│   ├── supervisor.txt
-│   ├── decomposer.txt
-│   ├── retriever.txt
-│   ├── synthesiser.txt
-│   ├── critic.txt
-│   └── writer.txt
-│
-├── chroma_db/                # Local Chroma database persistence
-├── logs/                     # Session structured JSONL traces
-├── config.py                 # Central config validator
-└── main.py                   # CLI entry point runner
+└── README.md                 # Project documentation
 ```

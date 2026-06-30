@@ -3,8 +3,8 @@ import sys
 import os
 import logging
 from config import config
-from src.utils.observability import setup_logger
-from src.services.supervisor import SupervisorAgent
+from utils.observability import setup_logger
+from agents.supervisor_cli import SupervisorAgent
 
 # Set up logging early
 setup_logger(config.log_level)

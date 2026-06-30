@@ -2,13 +2,13 @@ import time
 import logging
 from typing import Dict, Tuple, Any
 from config import config
-from src.models.schemas import SessionState, CritiqueReport
-from src.services.decomposer import DecomposerAgent
-from src.services.retriever import RetrieverAgent
-from src.services.synthesiser import SynthesiserAgent
-from src.services.critic import CriticAgent
-from src.services.writer import WriterAgent
-from src.utils.observability import Tracer
+from models.schemas import SessionState, CritiqueReport
+from agents.decomposer import DecomposerAgent
+from agents.retriever import RetrieverAgent
+from agents.synthesiser import SynthesiserAgent
+from agents.critic import CriticAgent
+from agents.writer import WriterAgent
+from utils.observability import Tracer
 
 logger = logging.getLogger("ResearchPilot.Supervisor")
 
