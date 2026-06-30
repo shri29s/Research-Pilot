@@ -65,16 +65,16 @@
         <p class="hero-sub">Enter an open-ended research question. ResearchPilot orchestrates a coordinated team of autonomous agents to search academic databases, cross-reference findings, verify facts, and build a cited manuscript in real-time.</p>
       </div>
 
-      <div class="bento-grid">
-        <!-- Main Bento Grid Item: Query Card -->
-        <div class="bento-item main-query">
+      <div class="input-container">
+        <!-- Main Query Card -->
+        <div class="input-card main-query">
           <div class="input-header">
             <label for="query-input" class="input-label">RESEARCH INQUIRY</label>
             <span class="input-kbd">CTRL + ENTER</span>
           </div>
           <textarea id="query-input"
             placeholder="e.g., What are the key approaches to handling multi-hop reasoning in RAG systems?"
-            rows="4"></textarea>
+            rows="3"></textarea>
           <div class="input-actions">
             <button id="submit-btn" disabled>
               <span>Begin Synthesis</span>
@@ -86,8 +86,8 @@
           </div>
         </div>
 
-        <!-- Bento Grid Item: Example Chips -->
-        <div class="bento-item topics-widget">
+        <!-- Example Chips -->
+        <div class="input-card topics-widget">
           <span class="section-tag">POPULAR SYSTEM TOPICS</span>
           <div id="example-chips">
             <button class="chip" data-query="What are the state-of-the-art approaches to retrieval-augmented generation?">RAG Approaches</button>

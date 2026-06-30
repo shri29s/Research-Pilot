@@ -147,9 +147,9 @@ function startTotalTimer() {
   }, 100);
 }
 
-function formatManuscriptOutput(html) {
+function formatManuscriptOutput(markdown) {
   // Replace Quality Metrics with premium UI components
-  let formatted = html.replace(/<p><em>Quality Metrics: Coverage (\d+)\/10 \| Grounding (\d+)\/10 \| Citations (\d+)\/10<\/em><\/p>/gi, (match, cov, grd, cit) => {
+  let formatted = markdown.replace(/[\*_]{1,2}\s*Quality Metrics:\s*Coverage\s*(\d+)\/10\s*\|\s*Grounding\s*(\d+)\/10\s*\|\s*Citations\s*(\d+)\/10\s*[\*_]{1,2}/gi, (match, cov, grd, cit) => {
     const cVal = parseInt(cov);
     const gVal = parseInt(grd);
     const ciVal = parseInt(cit);
@@ -158,65 +158,68 @@ function formatManuscriptOutput(html) {
     const statusText = isPassing ? 'PASSED AUDIT' : 'FAILED AUDIT';
     
     return `
-      <div class="quality-card ${statusClass}">
-        <div class="quality-header">
-          <span class="quality-title">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right: 4px; vertical-align: middle;">
-              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-              <polyline points="22 4 12 14.01 9 11.01"></polyline>
-            </svg>
-            CRITIC QUALITY METRICS
-          </span>
-          <span class="quality-status">${statusText}</span>
-        </div>
-        <div class="metrics-grid">
-          <div class="metric-item">
-            <div class="metric-info">
-              <span class="metric-name">Coverage</span>
-              <span class="metric-score">${cVal}/10</span>
-            </div>
-            <div class="metric-bar-bg">
-              <div class="metric-bar" style="width: ${cVal * 10}%"></div>
-            </div>
-          </div>
-          <div class="metric-item">
-            <div class="metric-info">
-              <span class="metric-name">Grounding</span>
-              <span class="metric-score">${gVal}/10</span>
-            </div>
-            <div class="metric-bar-bg">
-              <div class="metric-bar" style="width: ${gVal * 10}%"></div>
-            </div>
-          </div>
-          <div class="metric-item">
-            <div class="metric-info">
-              <span class="metric-name">Citations</span>
-              <span class="metric-score">${ciVal}/10</span>
-            </div>
-            <div class="metric-bar-bg">
-              <div class="metric-bar" style="width: ${ciVal * 10}%"></div>
-            </div>
-          </div>
-        </div>
+<div class="quality-card ${statusClass}">
+  <div class="quality-header">
+    <span class="quality-title">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right: 4px; vertical-align: middle;">
+        <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/>
+        <path d="m9 12 2 2 4-4"/>
+      </svg>
+      CRITIC QUALITY METRICS
+    </span>
+    <span class="quality-status">${statusText}</span>
+  </div>
+  <div class="metrics-grid">
+    <div class="metric-item">
+      <div class="metric-info">
+        <span class="metric-name">Coverage</span>
+        <span class="metric-score">${cVal}/10</span>
       </div>
-    `;
+      <div class="metric-bar-bg">
+        <div class="metric-bar" style="width: ${cVal * 10}%"></div>
+      </div>
+    </div>
+    <div class="metric-item">
+      <div class="metric-info">
+        <span class="metric-name">Grounding</span>
+        <span class="metric-score">${gVal}/10</span>
+      </div>
+      <div class="metric-bar-bg">
+        <div class="metric-bar" style="width: ${gVal * 10}%"></div>
+      </div>
+    </div>
+    <div class="metric-item">
+      <div class="metric-info">
+        <span class="metric-name">Citations</span>
+        <span class="metric-score">${ciVal}/10</span>
+      </div>
+      <div class="metric-bar-bg">
+        <div class="metric-bar" style="width: ${ciVal * 10}%"></div>
+      </div>
+    </div>
+  </div>
+</div>
+`;
   });
 
   // Replace Reviewer Notes with a premium alert box
-  formatted = formatted.replace(/<p><em>Reviewer Notes: (.*?)<\/em><\/p>/gi, (match, notes) => {
+  formatted = formatted.replace(/[\*_]{1,2}\s*Reviewer Notes:\s*(.*?)\s*[\*_]{1,2}/gi, (match, notes) => {
     return `
-      <div class="reviewer-notes-card">
-        <div class="reviewer-notes-header">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right: 4px; vertical-align: middle;">
-            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
-            <line x1="12" y1="9" x2="12" y2="13"></line>
-            <line x1="12" y1="17" x2="12.01" y2="17"></line>
-          </svg>
-          CRITIC REVISION FEEDBACK
-        </div>
-        <div class="reviewer-notes-text">${notes}</div>
-      </div>
-    `;
+<div class="reviewer-notes-card">
+  <div class="reviewer-notes-header">
+    <span style="display: flex; align-items: center; gap: 4px;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align: middle;">
+        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+        <line x1="12" y1="9" x2="12" y2="13"></line>
+        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+      </svg>
+      CRITIC REVISION FEEDBACK
+    </span>
+    <span class="reviewer-notes-badge">REVISION REQUIRED</span>
+  </div>
+  <div class="reviewer-notes-text">"${notes}"</div>
+</div>
+`;
   });
 
   return formatted;
@@ -259,8 +262,9 @@ function handleEvent(event) {
       
       markdownBuffer += event.content;
       try {
-        const rawHtml = DOMPurify.sanitize(marked.parse(markdownBuffer));
-        outputContent.innerHTML = formatManuscriptOutput(rawHtml);
+        const processedMarkdown = formatManuscriptOutput(markdownBuffer);
+        const rawHtml = DOMPurify.sanitize(marked.parse(processedMarkdown));
+        outputContent.innerHTML = rawHtml;
       } catch (err) {
         outputContent.textContent = markdownBuffer; // Fallback
       }

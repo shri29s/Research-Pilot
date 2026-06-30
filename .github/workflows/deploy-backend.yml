@@ -40,6 +40,9 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      - name: Copy prompts folder into backend context
+        run: cp -r prompts backend/prompts
+
       - name: Build and Push Docker Image
         uses: docker/build-push-action@v5
         with:

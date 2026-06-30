@@ -27,11 +27,11 @@
   --font-body:      'Inter', system-ui, -apple-system, sans-serif;
   --font-mono:      'JetBrains Mono', monospace;
 
-  --size-display-xl:  clamp(2.8rem, 5.5vw, 4.2rem);
-  --size-display-lg:  clamp(1.8rem, 3.5vw, 2.5rem);
-  --size-heading:     clamp(1.25rem, 2vw, 1.6rem);
-  --size-body:        1.0625rem; /* 17px for premium readable body */
-  --size-caption:     0.8125rem; /* 13px label size */
+  --size-display-xl:  clamp(2.3rem, 4.5vw, 3.4rem);
+  --size-display-lg:  clamp(1.6rem, 3vw, 2.2rem);
+  --size-heading:     clamp(1.15rem, 2vw, 1.45rem);
+  --size-body:        0.975rem; /* ~15.6px readable body */
+  --size-caption:     0.75rem; /* 12px label size */
 
   --leading-display:  1.05;   /* Tight display headers */
   --leading-body:     1.75;   /* Generous editorial body reading spacing */
@@ -217,12 +217,12 @@ main {
   justify-content: center;
   max-width: 1000px;
   margin: 0 auto;
-  padding: 4rem 2rem;
-  min-height: 100%;
+  padding: 2rem 2rem;
+  height: 100%;
 }
 
 .hero-container {
-  margin-bottom: 2.5rem;
+  margin-bottom: 1.5rem;
   animation: fadeIn 0.8s var(--ease-out-expo);
 }
 
@@ -232,7 +232,7 @@ main {
   font-size: 0.75rem;
   color: var(--color-accent);
   letter-spacing: var(--tracking-caption);
-  margin-bottom: 1rem;
+  margin-bottom: 0.5rem;
 }
 
 .hero-title {
@@ -242,59 +242,56 @@ main {
   line-height: var(--leading-display);
   letter-spacing: var(--tracking-display);
   color: var(--color-text-primary);
-  margin-bottom: 1.5rem;
+  margin-bottom: 0.75rem;
 }
 
 .hero-sub {
-  font-size: 1.125rem;
+  font-size: 1rem;
   line-height: 1.7;
   color: var(--color-text-secondary);
   font-weight: 300;
   max-width: 720px;
 }
 
-/* Bento Grid System */
-.bento-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  grid-template-rows: auto auto auto;
-  gap: 1.5rem;
+/* Input Flow Layout System (Replaces Bento Grid) */
+.input-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
   animation: slideUp 0.8s var(--ease-out-expo) 100ms both;
 }
 
-.bento-item {
+.input-card {
   background: rgba(12, 12, 15, 0.7);
   backdrop-filter: blur(12px);
   border: 1px solid var(--color-border);
   padding: 1.5rem 1.75rem;
+  border-radius: 4px;
   transition: all var(--duration-base) var(--ease-out-expo);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  border-radius: 4px;
 }
 
-.bento-item:hover {
+.input-card:hover {
   border-color: rgba(255, 255, 255, 0.15);
   transform: translateY(-2px);
   box-shadow: 0 12px 36px rgba(0, 0, 0, 0.4);
 }
 
-.bento-item.main-query {
-  grid-column: 1 / 4;
-  grid-row: 1;
-  min-height: 240px;
+.input-card.main-query {
+  min-height: 200px;
 }
 
-.bento-item.main-query:focus-within {
+.input-card.main-query:focus-within {
   border-color: var(--color-accent-soft);
   box-shadow: 0 12px 36px rgba(0, 0, 0, 0.4), 
               0 0 1px 1px var(--color-accent-soft);
 }
 
-.bento-item.topics-widget {
-  grid-column: 1 / 4;
-  grid-row: 2;
+.input-card.topics-widget {
+  min-height: auto;
 }
 
 /* Widgets Styling */
@@ -412,11 +409,11 @@ main {
   border: none;
   color: var(--color-text-primary);
   font-family: var(--font-body);
-  font-size: 1.15rem;
-  line-height: 1.6;
+  font-size: 1rem;
+  line-height: 1.5;
   resize: none;
   outline: none;
-  margin-bottom: 1rem;
+  margin-bottom: 0.5rem;
   flex-grow: 1;
 }
 
@@ -435,7 +432,7 @@ main {
   color: var(--color-ink);
   border: none;
   border-radius: 0;
-  padding: 0.85rem 2rem;
+  padding: 0.65rem 1.5rem;
   font-family: var(--font-body);
   font-size: var(--size-caption);
   font-weight: 600;
@@ -492,7 +489,7 @@ main {
   background: var(--color-surface-mid);
   border: 1px solid var(--color-border);
   color: var(--color-text-secondary);
-  padding: 0.55rem 1.15rem;
+  padding: 0.4rem 0.9rem;
   border-radius: 4px;
   font-family: var(--font-body);
   font-size: var(--size-caption);
@@ -972,23 +969,15 @@ main {
   margin: 3.5rem 0;
 }
 
-/* Quality metrics card styling */
+/* Quality metrics card styling - Minimalistic */
 .quality-card {
   background: var(--color-surface-mid);
   border: 1px solid var(--color-border);
-  padding: 1.5rem;
+  padding: 1.25rem 1.5rem;
   margin: 2rem 0;
-  border-radius: 4px;
+  border-radius: 3px;
   position: relative;
-  transition: all var(--duration-base) var(--ease-out-expo);
-}
-
-.quality-card.status-pass {
-  border-left: 3px solid #2ECC71; /* Green status accent */
-}
-
-.quality-card.status-fail {
-  border-left: 3px solid #E74C3C; /* Red status accent */
+  overflow: hidden;
 }
 
 .quality-header {
@@ -996,7 +985,7 @@ main {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1.25rem;
-  padding-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
   border-bottom: 1px solid var(--color-border);
 }
 
@@ -1011,33 +1000,26 @@ main {
 }
 
 .quality-title svg {
-  color: var(--color-accent);
+  color: var(--color-text-secondary);
 }
 
 .quality-status {
   font-family: var(--font-mono);
   font-size: 0.625rem;
-  font-weight: 600;
-  padding: 0.2rem 0.5rem;
+  font-weight: 500;
+  padding: 0.15rem 0.4rem;
+  border-radius: 2px;
+  letter-spacing: 0.08em;
+  color: var(--color-text-secondary);
   background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--color-border);
 }
 
-.quality-card.status-pass .quality-status {
-  color: #2ECC71;
-  background: rgba(46, 204, 113, 0.08);
-  border: 1px solid rgba(46, 204, 113, 0.15);
-}
-
-.quality-card.status-fail .quality-status {
-  color: #E74C3C;
-  background: rgba(231, 76, 60, 0.08);
-  border: 1px solid rgba(231, 76, 60, 0.15);
-}
-
+/* Metric Bars & Metrics Grid */
 .metrics-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 1.5rem;
+  gap: 1.25rem;
 }
 
 @media (max-width: 500px) {
@@ -1060,67 +1042,80 @@ main {
 }
 
 .metric-name {
+  font-family: var(--font-body);
   font-size: 0.8125rem;
-  font-weight: 500;
+  font-weight: 400;
   color: var(--color-text-secondary);
 }
 
 .metric-score {
   font-family: var(--font-mono);
   font-size: 0.8125rem;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--color-text-primary);
 }
 
 .metric-bar-bg {
-  height: 3px;
+  height: 2px;
   background: rgba(255, 255, 255, 0.06);
   width: 100%;
-  border-radius: 1.5px;
+  border-radius: 1px;
   overflow: hidden;
 }
 
 .metric-bar {
   height: 100%;
-  background: var(--color-accent);
-  border-radius: 1.5px;
-  transition: width 0.8s var(--ease-out-expo);
+  background: var(--color-text-secondary);
+  border-radius: 1px;
+  width: 0;
+  transition: width 1.2s var(--ease-out-expo);
 }
 
 .quality-card.status-pass .metric-bar {
-  background: #2ECC71;
+  background: var(--color-text-secondary);
 }
 
 .quality-card.status-fail .metric-bar {
-  background: #F39C12; /* orange warnings */
+  background: var(--color-text-dim);
 }
 
-/* Reviewer Notes alert card */
+/* Reviewer Notes card - Minimalistic */
 .reviewer-notes-card {
-  background: rgba(243, 156, 18, 0.03);
-  border: 1px solid rgba(243, 156, 18, 0.1);
-  border-left: 3px solid #F39C12;
+  background: var(--color-surface-mid);
+  border: 1px solid var(--color-border);
   padding: 1.25rem 1.5rem;
   margin: 1.5rem 0 2rem 0;
-  border-radius: 4px;
+  border-radius: 3px;
+  position: relative;
 }
 
 .reviewer-notes-header {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  justify-content: space-between;
   font-family: var(--font-mono);
   font-size: 0.6875rem;
-  font-weight: 600;
-  color: #F39C12;
-  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  margin-bottom: 0.75rem;
   letter-spacing: var(--tracking-caption);
 }
 
+.reviewer-notes-badge {
+  font-size: 0.625rem;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--color-text-secondary);
+  padding: 0.15rem 0.4rem;
+  border: 1px solid var(--color-border);
+  border-radius: 2px;
+}
+
 .reviewer-notes-text {
+  font-family: var(--font-body);
   font-size: 0.875rem;
   line-height: 1.6;
   color: var(--color-text-secondary);
+  font-style: italic;
 }
 
 /* Sources bibliography card layout overrides */
@@ -1290,6 +1285,11 @@ main {
   .input-card {
     padding: 1.25rem 1.5rem;
     margin-bottom: 2rem;
+  }
+
+  .input-card {
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 0;
   }
 
   /* Results Panel split screen collapsing */
