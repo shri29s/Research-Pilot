@@ -40,12 +40,24 @@ def load_config() -> AppConfig:
     except ValueError:
         arxiv_limit = 5
 
+    chroma_db_path = os.getenv("CHROMA_DB_PATH", "chroma_db/")
+    try:
+        os.makedirs(chroma_db_path, exist_ok=True)
+        test_file = os.path.join(chroma_db_path, ".write_test")
+        with open(test_file, "w") as f:
+            f.write("test")
+        os.remove(test_file)
+    except (OSError, IOError):
+        print(f"WARNING: Directory '{chroma_db_path}' is not writable. Falling back to '/tmp/chroma_db/'", file=sys.stderr)
+        chroma_db_path = "/tmp/chroma_db/"
+        os.makedirs(chroma_db_path, exist_ok=True)
+
     return AppConfig(
         aimlabs_api_key=aimlabs_api_key,
         aimlabs_base_url=os.getenv("AIMLABS_BASE_URL", "https://api.aimlapi.com/v1"),
         chat_model=os.getenv("AIMLABS_CHAT_MODEL", "gpt-4o-mini"),
         embedding_model=os.getenv("AIMLABS_EMBEDDING_MODEL", "text-embedding-3-small"),
-        chroma_db_path=os.getenv("CHROMA_DB_PATH", "chroma_db/"),
+        chroma_db_path=chroma_db_path,
         max_critique_loops=max_critique_loops,
         log_level=os.getenv("LOG_LEVEL", "INFO").upper(),
         semantic_scholar_limit=semantic_scholar_limit,

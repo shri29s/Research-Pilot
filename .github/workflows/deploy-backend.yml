@@ -64,6 +64,7 @@ jobs:
           env_vars: |
             AIMLABS_API_KEY=${{ secrets.AIMLABS_API_KEY }}
             ALLOWED_ORIGIN=https://academicresearchpilot.vercel.app
+            CHROMA_DB_PATH=/tmp/chroma_db
           flags: |
             --allow-unauthenticated
             --memory=1Gi
