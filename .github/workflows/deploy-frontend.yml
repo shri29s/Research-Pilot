@@ -12,6 +12,9 @@ jobs:
   deploy-frontend:
     name: Deploy Frontend to Vercel
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -21,7 +24,7 @@ jobs:
 
       - name: Inject Production Config
         run: |
-          echo "const CONFIG = { production: true, prod_url: '${{ secrets.BACKEND_URL }}' };" > frontend/config.js
+          echo "const CONFIG = { production: true, prod_url: '${{ secrets.BACKEND_URL }}' };" > config.js
 
       - name: Pull Vercel Environment Information
         run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
@@ -40,3 +43,4 @@ jobs:
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
