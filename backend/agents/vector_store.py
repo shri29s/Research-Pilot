@@ -1,7 +1,7 @@
 import json
 import logging
 import chromadb
-from openai import OpenAI
+from openai import OpenAI, AsyncOpenAI
 from typing import List, Dict, Any, Optional
 from config import config
 from models.schemas import Paper
@@ -10,6 +10,12 @@ logger = logging.getLogger("ResearchPilot.VectorStore")
 
 # Initialize OpenAI client for AIMALabs embeddings
 embedding_client = OpenAI(
+    api_key=config.aimlabs_api_key,
+    base_url=config.aimlabs_base_url
+)
+
+# Initialize AsyncOpenAI client for AIMALabs embeddings
+async_embedding_client = AsyncOpenAI(
     api_key=config.aimlabs_api_key,
     base_url=config.aimlabs_base_url
 )
@@ -129,3 +135,71 @@ def retrieve_relevant_papers(sub_question: str, top_k: int = 5) -> List[Paper]:
         logger.error(f"Error retrieving papers from ChromaDB: {str(e)}")
         
     return papers
+
+async def get_text_embeddings_async(texts: List[str]) -> List[List[float]]:
+    """
+    Computes text embeddings in batch asynchronously using AIMALabs embedding model.
+    """
+    if not texts:
+        return []
+    try:
+        response = await async_embedding_client.embeddings.create(
+            model=config.embedding_model,
+            input=texts
+        )
+        return [item.embedding for item in response.data]
+    except Exception as e:
+        logger.error(f"Error calling AIMALabs Embedding API for batch of size {len(texts)}: {str(e)}")
+        # Return dummy embeddings on error
+        return [[0.0] * 1536 for _ in texts]
+
+async def store_papers_async(papers: List[Paper]) -> List[str]:
+    """
+    Stores multiple papers in ChromaDB using batch embedding and batch insert asynchronously.
+    """
+    try:
+        # Check which papers already exist in database
+        existing = collection.get(ids=[paper.id for paper in papers])
+        existing_ids = set(existing.get("ids", []) if existing else [])
+        
+        papers_to_insert = [p for p in papers if p.id not in existing_ids]
+        
+        if not papers_to_insert:
+            logger.info("All papers already exist in ChromaDB. Skipping insert.")
+            return [p.id for p in papers]
+
+        # Extract texts to embed for new papers
+        texts_to_embed = [p.abstract if p.abstract.strip() else p.title for p in papers_to_insert]
+        
+        logger.info(f"Generating embeddings for {len(papers_to_insert)} papers in batch asynchronously")
+        embeddings = await get_text_embeddings_async(texts_to_embed)
+        
+        ids = []
+        metadatas = []
+        documents = []
+        
+        for paper, embedding in zip(papers_to_insert, embeddings):
+            metadata = {
+                "title": paper.title,
+                "authors": json.dumps(paper.authors),
+                "year": paper.year if paper.year is not None else -1,
+                "source": paper.source,
+                "citation_count": paper.citation_count,
+                "external_url": paper.external_url or ""
+            }
+            ids.append(paper.id)
+            metadatas.append(metadata)
+            documents.append(paper.abstract or paper.title)
+            
+        collection.add(
+            ids=ids,
+            embeddings=embeddings,
+            metadatas=metadatas,
+            documents=documents
+        )
+        logger.info(f"Successfully stored {len(papers_to_insert)} new papers in ChromaDB.")
+        return [p.id for p in papers]
+    except Exception as e:
+        logger.error(f"Error storing papers in ChromaDB: {str(e)}")
+        return [p.id for p in papers]
+

@@ -2,6 +2,7 @@ import argparse
 import sys
 import os
 import logging
+import asyncio
 from config import config
 from utils.observability import setup_logger
 from agents.supervisor_cli import SupervisorAgent
@@ -10,7 +11,7 @@ from agents.supervisor_cli import SupervisorAgent
 setup_logger(config.log_level)
 logger = logging.getLogger("ResearchPilot.Main")
 
-def main():
+async def main():
     parser = argparse.ArgumentParser(
         description="ResearchPilot: An AI Multi-Agent Academic Literature Synthesis Tool."
     )
@@ -52,7 +53,7 @@ def main():
         print(f"\nStarting multi-agent lit review compilation for: '{query}'")
         print("This may take 1-2 minutes. Processing academic APIs and auditing synthesis...")
         
-        report, trace_summary = supervisor.run(query)
+        report, trace_summary = await supervisor.run(query)
         
         # Save output markdown report
         try:
@@ -88,4 +89,4 @@ def main():
         sys.exit(1)
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
