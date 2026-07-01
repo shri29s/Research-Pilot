@@ -65,80 +65,132 @@ class SupervisorAgent:
         yield {"type": "token", "content": "\n"}
         await asyncio.sleep(0.05)
         
-        # Define concurrent sub-question process helper
-        async def process_single_sub_question(index: int, sub_q: str) -> Tuple[List[Dict[str, Any]], List[Paper], str, CritiqueReport, int, float, float, float]:
-            sub_q_events = []
+        # Define concurrent sub-question process helper and event queue
+        num_sub_questions = len(sub_questions)
+        event_queue = asyncio.Queue()
+        
+        stage_state = {
+            "retrievers_started": 0,
+            "retrievers_done": 0,
+            "retriever_start_time": 0.0,
             
-            # Helper to append token events
+            "synthesisers_started": 0,
+            "synthesisers_done": 0,
+            "synthesiser_start_time": 0.0,
+            
+            "critics_started": 0,
+            "critics_done": 0,
+            "critic_start_time": 0.0,
+        }
+
+        async def process_single_sub_question(index: int, sub_q: str) -> Tuple[List[Paper], str, CritiqueReport, int, float, float, float]:
+            sub_q_tokens = []
+            
             def log_token(content: str):
-                sub_q_events.append({"type": "token", "content": content})
+                sub_q_tokens.append(content)
                 
             log_token(f"### Sub-Question {index}: *{sub_q}*\n")
             
-            # 3a. Retrieve and store papers
-            sub_q_events.append({"type": "agent_start", "agent": "retriever"})
-            log_token("**RetrieverAgent**: Querying Semantic Scholar & ArXiv databases...\n")
-            
-            start_retriever = time.time()
-            retrieved_papers = await self.retriever.run_async(sub_q)
-            retriever_duration = (time.time() - start_retriever) * 1000
-            
-            sub_q_events.append({"type": "agent_done", "agent": "retriever", "elapsed_ms": int(retriever_duration)})
-            log_token(f"  * Retrieved and cached **{len(retrieved_papers)}** papers in ChromaDB.\n")
-            
-            # 3b. Synthesize & Critique loop
-            iteration = 0
-            feedback = None
+            retrieved_papers = []
             synthesis = ""
             critique = None
-            
+            iteration = 0
+            retriever_duration = 0.0
             sub_q_synthesiser_ms = 0.0
             sub_q_critic_ms = 0.0
             
-            while iteration <= config.max_critique_loops:
-                iteration += 1
+            try:
+                # --- Retriever Stage ---
+                stage_state["retrievers_started"] += 1
+                if stage_state["retrievers_started"] == 1:
+                    stage_state["retriever_start_time"] = time.time()
+                    await event_queue.put({"type": "agent_start", "agent": "retriever"})
+                    
+                log_token("**RetrieverAgent**: Querying Semantic Scholar & ArXiv databases...\n")
                 
-                # Run Synthesiser
-                sub_q_events.append({"type": "agent_start", "agent": "synthesiser"})
-                log_token(f"**SynthesiserAgent**: Drafting synthesis block (Iteration {iteration})...\n")
+                start_retriever = time.time()
+                retrieved_papers = await self.retriever.run_async(sub_q)
+                retriever_duration = (time.time() - start_retriever) * 1000
                 
-                start_synth = time.time()
-                synthesis = await self.synthesiser.run_async(sub_q, feedback=feedback)
-                synth_duration = (time.time() - start_synth) * 1000
-                sub_q_synthesiser_ms += synth_duration
+                log_token(f"  * Retrieved and cached **{len(retrieved_papers)}** papers in ChromaDB.\n")
                 
-                sub_q_events.append({"type": "agent_done", "agent": "synthesiser", "elapsed_ms": int(sub_q_synthesiser_ms)})
+                stage_state["retrievers_done"] += 1
+                if stage_state["retrievers_done"] == num_sub_questions:
+                    retriever_elapsed = (time.time() - stage_state["retriever_start_time"]) * 1000
+                    await event_queue.put({"type": "agent_done", "agent": "retriever", "elapsed_ms": int(retriever_elapsed)})
+                    
+                # --- Synthesiser & Critic loop ---
+                feedback = None
                 
-                # Run Critic
-                sub_q_events.append({"type": "agent_start", "agent": "critic"})
-                log_token("**CriticAgent (LLM-as-Judge)**: Auditing synthesis draft quality...\n")
-                
-                start_crit = time.time()
-                critique = await self.critic.run_async(sub_q, retrieved_papers, synthesis)
-                crit_duration = (time.time() - start_crit) * 1000
-                sub_q_critic_ms += crit_duration
-                
-                sub_q_events.append({"type": "agent_done", "agent": "critic", "elapsed_ms": int(sub_q_critic_ms)})
-                log_token(f"  * Quality audit scores: Coverage **{critique.coverage}/10** | Grounding **{critique.grounding}/10** | Citations **{critique.citations}/10**\n")
-                
-                # Check if scores are passing (>= 7 for all metrics)
-                is_passing = (
-                    critique.coverage >= 7 and 
-                    critique.grounding >= 7 and 
-                    critique.citations >= 7
-                )
-                
-                if is_passing:
-                    log_token("  * Review PASSED!\n\n")
-                    break
-                elif iteration <= config.max_critique_loops:
-                    log_token(f"  * Review FAILED. Revision Notes: {critique.revision_notes}\n")
-                    feedback = critique.revision_notes
-                else:
-                    log_token("  * Review FAILED. Max revision attempts reached. Proceeding with current draft.\n\n")
-            
+                stage_state["synthesisers_started"] += 1
+                if stage_state["synthesisers_started"] == 1:
+                    stage_state["synthesiser_start_time"] = time.time()
+                    await event_queue.put({"type": "agent_start", "agent": "synthesiser"})
+                    
+                stage_state["critics_started"] += 1
+                if stage_state["critics_started"] == 1:
+                    stage_state["critic_start_time"] = time.time()
+                    await event_queue.put({"type": "agent_start", "agent": "critic"})
+                    
+                while iteration <= config.max_critique_loops:
+                    iteration += 1
+                    
+                    log_token(f"**SynthesiserAgent**: Drafting synthesis block (Iteration {iteration})...\n")
+                    
+                    start_synth = time.time()
+                    synthesis = await self.synthesiser.run_async(sub_q, feedback=feedback)
+                    synth_duration = (time.time() - start_synth) * 1000
+                    sub_q_synthesiser_ms += synth_duration
+                    
+                    log_token("**CriticAgent (LLM-as-Judge)**: Auditing synthesis draft quality...\n")
+                    
+                    start_crit = time.time()
+                    critique = await self.critic.run_async(sub_q, retrieved_papers, synthesis)
+                    crit_duration = (time.time() - start_crit) * 1000
+                    sub_q_critic_ms += crit_duration
+                    
+                    log_token(f"  * Quality audit scores: Coverage **{critique.coverage}/10** | Grounding **{critique.grounding}/10** | Citations **{critique.citations}/10**\n")
+                    
+                    is_passing = (
+                        critique.coverage >= 7 and 
+                        critique.grounding >= 7 and 
+                        critique.citations >= 7
+                    )
+                    
+                    if is_passing:
+                        log_token("  * Review PASSED!\n\n")
+                        break
+                    elif iteration <= config.max_critique_loops:
+                        log_token(f"  * Review FAILED. Revision Notes: {critique.revision_notes}\n")
+                        feedback = critique.revision_notes
+                    else:
+                        log_token("  * Review FAILED. Max revision attempts reached. Proceeding with current draft.\n\n")
+            finally:
+                for token in sub_q_tokens:
+                    await event_queue.put({"type": "token", "content": token})
+                    
+                if stage_state["retrievers_done"] < stage_state["retrievers_started"]:
+                    stage_state["retrievers_done"] += 1
+                    if stage_state["retrievers_done"] == num_sub_questions:
+                        ret_start = stage_state["retriever_start_time"] if stage_state["retriever_start_time"] > 0 else time.time()
+                        retriever_elapsed = (time.time() - ret_start) * 1000
+                        await event_queue.put({"type": "agent_done", "agent": "retriever", "elapsed_ms": int(retriever_elapsed)})
+                        
+                if stage_state["synthesisers_started"] > stage_state["synthesisers_done"]:
+                    stage_state["synthesisers_done"] += 1
+                    if stage_state["synthesisers_done"] == num_sub_questions:
+                        synth_start = stage_state["synthesiser_start_time"] if stage_state["synthesiser_start_time"] > 0 else time.time()
+                        synthesiser_elapsed = (time.time() - synth_start) * 1000
+                        await event_queue.put({"type": "agent_done", "agent": "synthesiser", "elapsed_ms": int(synthesiser_elapsed)})
+                        
+                if stage_state["critics_started"] > stage_state["critics_done"]:
+                    stage_state["critics_done"] += 1
+                    if stage_state["critics_done"] == num_sub_questions:
+                        crit_start = stage_state["critic_start_time"] if stage_state["critic_start_time"] > 0 else time.time()
+                        critic_elapsed = (time.time() - crit_start) * 1000
+                        await event_queue.put({"type": "agent_done", "agent": "critic", "elapsed_ms": int(critic_elapsed)})
+                        
             return (
-                sub_q_events,
                 retrieved_papers,
                 synthesis,
                 critique,
@@ -149,11 +201,32 @@ class SupervisorAgent:
             )
 
         # Run all sub-questions concurrently
-        tasks = [process_single_sub_question(i, sub_q) for i, sub_q in enumerate(sub_questions, 1)]
-        results = await asyncio.gather(*tasks)
+        tasks = [asyncio.create_task(process_single_sub_question(i, sub_q)) for i, sub_q in enumerate(sub_questions, 1)]
         
-        # Populate session state and trace metrics, and yield events in order
-        for index, (sub_q_events, retrieved_papers, synthesis, critique, iterations_run, ret_dur, synth_dur, crit_dur) in enumerate(results, 1):
+        async def wait_and_sentinel():
+            results = await asyncio.gather(*tasks, return_exceptions=True)
+            await event_queue.put(None)
+            return results
+            
+        gather_task = asyncio.create_task(wait_and_sentinel())
+        
+        while True:
+            event = await event_queue.get()
+            if event is None:
+                break
+            yield event
+            if event["type"] == "token":
+                await asyncio.sleep(0.01)
+            else:
+                await asyncio.sleep(0.05)
+                
+        results = await gather_task
+        for res in results:
+            if isinstance(res, Exception):
+                raise res
+        
+        # Populate session state and trace metrics
+        for index, (retrieved_papers, synthesis, critique, iterations_run, ret_dur, synth_dur, crit_dur) in enumerate(results, 1):
             sub_q = sub_questions[index - 1]
             
             # Store in session state
@@ -189,14 +262,6 @@ class SupervisorAgent:
                 sub_q, 
                 {"coverage": critique.coverage, "grounding": critique.grounding, "citations": critique.citations}
             )
-            
-            # Yield events to UI sequentially
-            for event in sub_q_events:
-                yield event
-                if event["type"] == "token":
-                    await asyncio.sleep(0.01)
-                else:
-                    await asyncio.sleep(0.05)
             
         # 4. Compile final report
         logger.info("--- Compiling Final Research Report ---")
