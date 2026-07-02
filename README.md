@@ -92,11 +92,6 @@ graph TD
    * **Role**: Manuscript Editor and Publisher.
    * **Responsibility**: Compiles individual syntheses, formats clickable bibliographical sources with URLs, identifies cross-cutting themes, and outputs the final cited Markdown document.
 
-7. **Vector Store Manager**  
-   * **Implementation**: [vector_store.py](file:///c:/Home/Events/5DayAiAgents/capstone/backend/agents/vector_store.py)  
-   * **Role**: Embedding & Caching Engine.
-   * **Responsibility**: Wraps local ChromaDB collections, handles asynchronous batch embeddings using `text-embedding-3-small`, deduplicates records, and retrieves context for syntheses.
-
 ---
 
 ## 4. Technical Stack
